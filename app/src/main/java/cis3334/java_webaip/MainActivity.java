@@ -13,7 +13,6 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.squareup.moshi.JsonAdapter;
@@ -73,7 +72,37 @@ public class MainActivity extends AppCompatActivity {
 
     private void getStudentAPI() {
         // ======================= Student must add code here to get JSON data from an API =======================
-        textViewStatus.setText("Not implemented yet ....");
+
+        String url = "https://earthquake.usgs.gov/fdsnws/event/1/application.json";
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                Request.Method.GET, url, null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Moshi moshi = new Moshi.Builder().build();
+                        JsonAdapter<EarthquakeMeta> adapter = moshi.adapter(EarthquakeMeta.class);
+                        try {
+                            EarthquakeMeta meta = adapter.fromJson(response.toString());
+                            if (meta != null && meta.getEventtypes() != null) {
+                                // Example: show how many event types are available
+                                textViewStatus.setText("Event types: " + meta.getEventtypes().size());
+                            } else {
+                                textViewStatus.setText("Parse error: Missing event types");
+                            }
+                        } catch (IOException e) {
+                            textViewStatus.setText("Parse exception: " + e.getMessage());
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        textViewStatus.setText("ERROR Response: " + error.toString());
+                    }
+                });
+
+        mRequestQueue.add(jsonObjectRequest);
     }
 
     private void getDogFact() {
